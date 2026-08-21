@@ -128,10 +128,10 @@ What it computes:
 Re-uploading the same export later is safe — duplicate rows (same date + description + amount) are automatically
 skipped, so you can re-export weekly and just re-upload without double-counting.
 
-Symbols like ULTY and SLTY specifically: these are the kind of position where "total P/L including price
-movement" matters more than the distribution rate alone — funds using synthetic covered-call strategies can pay
-a high weekly yield while the share price erodes underneath it, so the *total* return (dividends + price change)
-is the honest number, not the yield in isolation. That's exactly what this tab is built to surface.
+This matters most for high-yield options-income funds (synthetic covered-call ETFs and similar): they can pay
+a large weekly/monthly distribution while the share price erodes underneath it, so the *total* return (dividends
++ price change) is the honest number, not the distribution rate in isolation. That's exactly what this tab is
+built to surface, for whatever tickers you actually hold.
 
 Click **"↻ Refresh all prices"** on the Overview tab any time to pull fresh quotes.
 
