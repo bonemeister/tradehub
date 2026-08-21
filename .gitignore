@@ -1,0 +1,18 @@
+# Your actual data — never committed
+trade_hub.db
+statements/
+*.csv
+*.pdf
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Env / secrets
+.env
+
+# OS cruft
+.DS_Store
+Thumbs.db

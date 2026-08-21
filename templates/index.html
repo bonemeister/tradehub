@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TradeHub</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/JetBrains-Mono/2.304/web/woff2/JetBrainsMono.min.css" onerror="this.remove()">
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<div class="rail">
+  <div class="rail-brand">
+    <span class="rail-mark">◈</span>
+    <span class="rail-name">TRADEHUB</span>
+  </div>
+  <nav class="rail-nav">
+    <button class="rail-tab active" data-tab="overview"><span class="tnum">00</span>Overview</button>
+    <button class="rail-tab" data-tab="stocks"><span class="tnum">01</span>Stocks</button>
+    <button class="rail-tab" data-tab="options"><span class="tnum">02</span>Options</button>
+    <button class="rail-tab" data-tab="crypto"><span class="tnum">03</span>Crypto</button>
+    <button class="rail-tab" data-tab="journal"><span class="tnum">04</span>Journal</button>
+    <button class="rail-tab" data-tab="backtest"><span class="tnum">05</span>Backtest</button>
+    <button class="rail-tab" data-tab="paper"><span class="tnum">06</span>Paper Trade</button>
+    <button class="rail-tab" data-tab="performance"><span class="tnum">07</span>Performance</button>
+  </nav>
+  <div class="rail-foot">
+    <div class="clock" id="clock">--:--:--</div>
+    <div class="rail-hint">local · sqlite</div>
+  </div>
+</div>
+
+<main class="stage">
+
+  <!-- OVERVIEW -->
+  <section class="pane active" id="pane-overview">
+    <header class="pane-head">
+      <h1>Book Overview</h1>
+      <button class="btn ghost" id="refresh-all">↻ Refresh all prices</button>
+    </header>
+    <div class="grid-3 kpis">
+      <div class="kpi">
+        <div class="kpi-label">Stocks value</div>
+        <div class="kpi-value" id="kpi-stocks">—</div>
+        <div class="kpi-sub" id="kpi-stocks-pl">—</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Crypto value</div>
+        <div class="kpi-value" id="kpi-crypto">—</div>
+        <div class="kpi-sub" id="kpi-crypto-pl">—</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Options premium at risk</div>
+        <div class="kpi-value" id="kpi-options">—</div>
+        <div class="kpi-sub" id="kpi-options-count">—</div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">Recent journal entries</div>
+      <div id="overview-journal" class="table-wrap"></div>
+    </div>
+  </section>
+
+  <!-- STOCKS -->
+  <section class="pane" id="pane-stocks">
+    <header class="pane-head">
+      <h1>Stock Positions</h1>
+      <div class="btn-row">
+        <button class="btn ghost" data-open="import-form">⇪ Import CSV</button>
+        <button class="btn" data-open="stock-form">+ Add position</button>
+      </div>
+    </header>
+    <div class="table-wrap">
+      <table class="data-table" id="stocks-table">
+        <thead><tr>
+          <th>Ticker</th><th>Broker</th><th>Tier</th><th>Shares</th><th>Cost Basis</th><th>Price</th><th>Day %</th><th>Mkt Value</th><th>P/L</th><th></th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- OPTIONS -->
+  <section class="pane" id="pane-options">
+    <header class="pane-head">
+      <h1>Options Tracker</h1>
+      <button class="btn" data-open="option-form">+ Add contract</button>
+    </header>
+    <div class="panel lookup-panel">
+      <div class="panel-head">Chain lookup</div>
+      <div class="lookup-row">
+        <input id="chain-ticker" placeholder="Ticker e.g. NVDA" maxlength="8">
+        <select id="chain-expiry"><option value="">Load ticker first…</option></select>
+        <button class="btn ghost" id="load-chain">Load chain</button>
+      </div>
+      <div id="chain-results" class="table-wrap"></div>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table" id="options-table">
+        <thead><tr>
+          <th>Ticker</th><th>Type</th><th>Side</th><th>Strike</th><th>Expiry</th><th>Contracts</th><th>Premium</th><th>Notional</th><th></th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- CRYPTO -->
+  <section class="pane" id="pane-crypto">
+    <header class="pane-head">
+      <h1>Crypto Positions</h1>
+      <button class="btn" data-open="crypto-form">+ Add position</button>
+    </header>
+    <div class="table-wrap">
+      <table class="data-table" id="crypto-table">
+        <thead><tr>
+          <th>Symbol</th><th>Amount</th><th>Staked</th><th>APY</th><th>Cost Basis</th><th>Price</th><th>24h %</th><th>Value</th><th>P/L</th><th></th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- JOURNAL -->
+  <section class="pane" id="pane-journal">
+    <header class="pane-head">
+      <h1>Trade Journal</h1>
+      <button class="btn" data-open="journal-form">+ Log trade</button>
+    </header>
+    <div class="grid-3 kpis" id="journal-stats"></div>
+    <div class="table-wrap">
+      <table class="data-table" id="journal-table">
+        <thead><tr>
+          <th>Date</th><th>Asset</th><th>Dir</th><th>Entry</th><th>Exit</th><th>Size</th><th>Result</th><th>Strategy</th><th>Notes</th><th></th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- BACKTEST -->
+  <section class="pane" id="pane-backtest">
+    <header class="pane-head">
+      <h1>Backtest</h1>
+    </header>
+    <p class="modal-hint" style="max-width:640px;">
+      Runs a rule set against a specific ticker's own historical bars — no projections, just what these exact
+      rules would have done. Results split into in-sample and out-of-sample so you can see if the edge holds up
+      on data the rules weren't shaped around.
+    </p>
+    <div class="panel">
+      <div class="panel-head">Configure</div>
+      <div class="bt-form">
+        <label>Ticker <input id="bt-ticker" placeholder="NVDA" maxlength="10"></label>
+        <label>Interval
+          <select id="bt-interval">
+            <option value="1d">Daily</option>
+            <option value="1h">1 hour</option>
+            <option value="15m">15 min</option>
+            <option value="5m">5 min</option>
+          </select>
+        </label>
+        <label>Period
+          <select id="bt-period">
+            <option value="5d">5 days</option>
+            <option value="1mo">1 month</option>
+            <option value="3mo">3 months</option>
+            <option value="6mo">6 months</option>
+            <option value="1y" selected>1 year</option>
+            <option value="2y">2 years</option>
+            <option value="5y">5 years</option>
+          </select>
+        </label>
+        <label>Strategy
+          <select id="bt-strategy">
+            <option value="breakout">Breakout + trailing stop</option>
+            <option value="ma_cross">Moving average crossover</option>
+          </select>
+        </label>
+      </div>
+      <div class="bt-form" id="bt-params-breakout">
+        <label>Breakout lookback (bars) <input id="bt-lookback" type="number" value="20"></label>
+        <label>Trailing stop % <input id="bt-trail" type="number" step="any" value="5"></label>
+        <label>Take profit % (optional) <input id="bt-tp" type="number" step="any" placeholder="none"></label>
+        <label>Volume confirmation ×avg (optional) <input id="bt-volmult" type="number" step="any" placeholder="e.g. 1.5"></label>
+      </div>
+      <div class="bt-form" id="bt-params-ma" style="display:none;">
+        <label>Fast MA (bars) <input id="bt-fast" type="number" value="10"></label>
+        <label>Slow MA (bars) <input id="bt-slow" type="number" value="30"></label>
+        <label>Trailing stop % <input id="bt-trail-ma" type="number" step="any" value="5"></label>
+      </div>
+      <div class="bt-form">
+        <label>Fee + slippage (bps, per side) <input id="bt-fee" type="number" step="any" value="5"></label>
+        <label>Out-of-sample reserve % <input id="bt-oos" type="number" step="any" value="30"></label>
+      </div>
+      <div style="padding: 4px 18px 18px;">
+        <button class="btn" id="bt-run">Run backtest</button>
+      </div>
+    </div>
+
+    <div id="bt-results" style="display:none;">
+      <div class="grid-3 kpis">
+        <div class="kpi"><div class="kpi-label">Expectancy / trade</div><div class="kpi-value" id="bt-expectancy">—</div><div class="kpi-sub" id="bt-tradecount">—</div></div>
+        <div class="kpi"><div class="kpi-label">Win rate</div><div class="kpi-value" id="bt-winrate">—</div><div class="kpi-sub" id="bt-avgs">—</div></div>
+        <div class="kpi"><div class="kpi-label">Profit factor</div><div class="kpi-value" id="bt-pf">—</div><div class="kpi-sub" id="bt-sharpe">—</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">In-sample vs out-of-sample</div>
+        <div class="table-wrap" id="bt-split-table"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">Equity curve (combined, per-trade compounding)</div>
+        <div style="padding:16px;"><canvas id="bt-canvas" width="1080" height="220" style="width:100%;height:220px;"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">Recent trades</div>
+        <div class="table-wrap" id="bt-trades-table"></div>
+      </div>
+    </div>
+    <div id="bt-error" class="modal-hint" style="display:none; color: var(--down);"></div>
+  </section>
+
+  <!-- PAPER TRADING -->
+  <section class="pane" id="pane-paper">
+    <header class="pane-head">
+      <h1>Paper Trading</h1>
+      <button class="btn ghost" id="paper-reset">↺ Reset account</button>
+    </header>
+    <p class="modal-hint" style="max-width:640px;">
+      Forward-tested hypotheticals against live prices, virtual cash only — nothing here touches a real
+      brokerage or exchange. A background check runs every 30s while this app is open: it fills pending
+      limit/stop orders and auto-exits positions on stop-loss, take-profit, or trailing stop.
+    </p>
+
+    <div class="grid-3 kpis">
+      <div class="kpi"><div class="kpi-label">Cash</div><div class="kpi-value" id="paper-cash">—</div></div>
+      <div class="kpi"><div class="kpi-label">Equity (cash + positions)</div><div class="kpi-value" id="paper-equity">—</div></div>
+      <div class="kpi"><div class="kpi-label">Total return</div><div class="kpi-value" id="paper-return">—</div></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">Place order</div>
+      <div class="bt-form">
+        <label>Symbol <input id="paper-symbol" placeholder="NVDA or solana"></label>
+        <label>Asset type
+          <select id="paper-asset-type"><option value="stock">Stock</option><option value="crypto">Crypto (CoinGecko id)</option></select>
+        </label>
+        <label>Order type
+          <select id="paper-order-type">
+            <option value="market">Market (fills now)</option>
+            <option value="limit">Limit (fills at/below price)</option>
+            <option value="stop">Stop (fills at/above price)</option>
+          </select>
+        </label>
+        <label>Quantity <input id="paper-qty" type="number" step="any" value="1"></label>
+      </div>
+      <div class="bt-form" id="paper-trigger-row" style="display:none;">
+        <label id="paper-limit-label">Limit price <input id="paper-limit-price" type="number" step="any"></label>
+        <label id="paper-stop-label" style="display:none;">Stop price <input id="paper-stop-price" type="number" step="any"></label>
+      </div>
+      <div class="bt-form">
+        <label>Stop-loss % (optional) <input id="paper-sl" type="number" step="any" placeholder="none"></label>
+        <label>Take-profit % (optional) <input id="paper-tp" type="number" step="any" placeholder="none"></label>
+        <label>Trailing stop % (optional) <input id="paper-trail" type="number" step="any" placeholder="none"></label>
+      </div>
+      <div style="padding: 4px 18px 18px;">
+        <button class="btn" id="paper-submit">Place order</button>
+        <span id="paper-order-msg" style="margin-left:12px; font-size:12.5px; color:var(--text-dim);"></span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">Open positions</div>
+      <div class="table-wrap" id="paper-positions-table"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">Pending orders</div>
+      <div class="table-wrap" id="paper-orders-table"></div>
+    </div>
+
+    <div class="grid-3 kpis" id="paper-stats-kpis"></div>
+    <div class="panel">
+      <div class="panel-head">Equity over time</div>
+      <div style="padding:16px;"><canvas id="paper-canvas" width="1080" height="220" style="width:100%;height:220px;"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">Closed paper trades</div>
+      <div class="table-wrap" id="paper-closed-table"></div>
+    </div>
+  </section>
+
+  <!-- PERFORMANCE -->
+  <section class="pane" id="pane-performance">
+    <header class="pane-head">
+      <h1>Performance</h1>
+      <button class="btn ghost" data-open="tx-import-form">⇪ Import Activity CSV</button>
+    </header>
+    <p class="modal-hint" style="max-width:640px;">
+      Different from the Stocks-tab import — this reads your broker's <strong>Activity/History</strong> export
+      (deposits, withdrawals, dividends, buys, sells) instead of just a positions snapshot, so it can answer
+      "am I actually ahead" instead of just "what do I hold." In Fidelity: Account → Activity → export/download.
+    </p>
+
+    <div class="grid-3 kpis">
+      <div class="kpi"><div class="kpi-label">Net contributions</div><div class="kpi-value" id="perf-net-contrib">—</div><div class="kpi-sub" id="perf-deposits-sub">—</div></div>
+      <div class="kpi"><div class="kpi-label">Total dividends received</div><div class="kpi-value" id="perf-dividends">—</div><div class="kpi-sub">across non-cash-sweep positions</div></div>
+      <div class="kpi"><div class="kpi-label">Transactions on file</div><div class="kpi-value" id="perf-tx-count">—</div><div class="kpi-sub">deduped by date + description + amount</div></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">Total P/L by symbol</div>
+      <div style="padding:16px;"><canvas id="perf-pl-canvas" width="1080" height="220" style="width:100%;height:220px;"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">Cumulative realized cash flow over time (dividends + sells − buys, excludes deposits/withdrawals)</div>
+      <div style="padding:16px;"><canvas id="perf-cashflow-canvas" width="1080" height="220" style="width:100%;height:220px;"></canvas></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">Per-symbol cash flow (excludes cash-sweep vehicles like SPAXX)</div>
+      <div class="table-wrap" id="perf-symbols-table"></div>
+    </div>
+    <p class="modal-hint">
+      "Cash P/L to date" = money out (sales + dividends) minus money in (buys), for that symbol only — it's real
+      whether the position is open or closed. "Total P/L" adds the live value of any shares still held, when a
+      quantity column was available to compute a running share count and a live price could be found. Status
+      shows "unknown" when the import didn't include a quantity column — the cash P/L is still accurate, there's
+      just no way to tell if the position is fully closed out.
+    </p>
+
+    <div class="panel">
+      <div class="panel-head">Recent transactions (most recent 200)</div>
+      <div class="table-wrap" id="perf-ledger-table"></div>
+    </div>
+  </section>
+
+</main>
+
+<div class="modal-backdrop" id="modal-backdrop"></div>
+
+<div class="modal" id="stock-form">
+  <h2>Add stock position</h2>
+  <form data-submit="stocks">
+    <label>Ticker <input name="ticker" required maxlength="8" placeholder="NVDA"></label>
+    <label>Shares <input name="shares" type="number" step="any" required></label>
+    <label>Cost basis (per share) <input name="cost_basis" type="number" step="any" required></label>
+    <label>Tier
+      <select name="tier">
+        <option>Core</option><option>Growth</option><option>High Risk</option>
+      </select>
+    </label>
+    <label>Broker/account <input name="broker" placeholder="manual" value="manual"></label>
+    <label>Notes <input name="notes"></label>
+    <div class="modal-actions">
+      <button type="button" class="btn ghost" data-close>Cancel</button>
+      <button type="submit" class="btn">Save</button>
+    </div>
+  </form>
+</div>
+
+<div class="modal" id="import-form" style="width:520px;">
+  <h2>Import positions from CSV</h2>
+  <div id="import-step-upload">
+    <p class="modal-hint">Export your positions from Fidelity ("Portfolio Positions" → download CSV) or Webull
+      (positions tab → export), then upload it here. Nothing is sent anywhere — it's parsed locally by this app.</p>
+    <label>Broker / account label
+      <input id="import-broker" placeholder="fidelity, webull, etc.">
+    </label>
+    <label>CSV file
+      <input id="import-file" type="file" accept=".csv">
+    </label>
+    <div class="modal-actions">
+      <button type="button" class="btn ghost" data-close>Cancel</button>
+      <button type="button" class="btn" id="import-preview-btn">Preview</button>
+    </div>
+  </div>
+  <div id="import-step-map" style="display:none;">
+    <p class="modal-hint">Confirm which columns to use — auto-detected where possible.</p>
+    <label>Ticker column <select id="map-ticker"></select></label>
+    <label>Shares column <select id="map-shares"></select></label>
+    <label>Cost basis per share column <select id="map-cost"></select></label>
+    <label>(fallback) Total cost basis column <select id="map-total-cost"></select></label>
+    <div id="import-sample" class="table-wrap" style="margin:10px 0;"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn ghost" id="import-back-btn">Back</button>
+      <button type="button" class="btn" id="import-commit-btn">Confirm import</button>
+    </div>
+  </div>
+  <div id="import-step-result" style="display:none;">
+    <div id="import-result-body"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn" data-close>Done</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="tx-import-form" style="width:520px;">
+  <h2>Import activity/transaction history</h2>
+  <div id="tx-import-step-upload">
+    <p class="modal-hint">In Fidelity: Account → Activity → export/download. In Webull: Transaction history →
+      export. This is your deposit/dividend/buy/sell ledger, not a positions snapshot.</p>
+    <label>Broker / account label
+      <input id="tx-import-broker" placeholder="fidelity, webull, etc.">
+    </label>
+    <label>CSV file
+      <input id="tx-import-file" type="file" accept=".csv">
+    </label>
+    <div class="modal-actions">
+      <button type="button" class="btn ghost" data-close>Cancel</button>
+      <button type="button" class="btn" id="tx-import-preview-btn">Preview</button>
+    </div>
+  </div>
+  <div id="tx-import-step-map" style="display:none;">
+    <p class="modal-hint">Confirm which columns to use — auto-detected where possible.</p>
+    <label>Date column <select id="tx-map-date"></select></label>
+    <label>Action/description column <select id="tx-map-action"></select></label>
+    <label>Symbol column (optional — extracted from description if blank) <select id="tx-map-symbol"></select></label>
+    <label>Amount column <select id="tx-map-amount"></select></label>
+    <label>Quantity column (optional) <select id="tx-map-qty"></select></label>
+    <div id="tx-import-sample" class="table-wrap" style="margin:10px 0;"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn ghost" id="tx-import-back-btn">Back</button>
+      <button type="button" class="btn" id="tx-import-commit-btn">Confirm import</button>
+    </div>
+  </div>
+  <div id="tx-import-step-result" style="display:none;">
+    <div id="tx-import-result-body"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn" data-close>Done</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="option-form">
+  <h2>Add option contract</h2>
+  <form data-submit="options">
+    <label>Ticker <input name="ticker" required maxlength="8" placeholder="AAPL"></label>
+    <label>Type
+      <select name="option_type"><option value="call">Call</option><option value="put">Put</option></select>
+    </label>
+    <label>Side
+      <select name="side"><option value="short">Short (sold)</option><option value="long">Long (bought)</option></select>
+    </label>
+    <label>Strike <input name="strike" type="number" step="any" required></label>
+    <label>Expiry <input name="expiry" type="date" required></label>
+    <label>Contracts <input name="contracts" type="number" step="1" value="1" required></label>
+    <label>Premium (per share) <input name="premium" type="number" step="any" required></label>
+    <label>Notes <input name="notes"></label>
+    <div class="modal-actions">
+      <button type="button" class="btn ghost" data-close>Cancel</button>
+      <button type="submit" class="btn">Save</button>
+    </div>
+  </form>
+</div>
+
+<div class="modal" id="crypto-form">
+  <h2>Add crypto position</h2>
+  <form data-submit="crypto-positions">
+    <label>CoinGecko ID <input name="symbol" required placeholder="solana (see coingecko.com/en/api)"></label>
+    <label>Display symbol <input name="display_symbol" required placeholder="SOL" maxlength="10"></label>
+    <label>Amount held <input name="amount" type="number" step="any" required></label>
+    <label>Total cost basis (USD) <input name="cost_basis" type="number" step="any" required></label>
+    <label>Amount staked <input name="staked" type="number" step="any" value="0"></label>
+    <label>Staking APY % <input name="apy" type="number" step="any" value="0"></label>
+    <label>Notes <input name="notes"></label>
+    <div class="modal-actions">
+      <button type="button" class="btn ghost" data-close>Cancel</button>
+      <button type="submit" class="btn">Save</button>
+    </div>
+  </form>
+</div>
+
+<div class="modal" id="journal-form">
+  <h2>Log a trade</h2>
+  <form data-submit="journal">
+    <label>Date <input name="date" type="date" required></label>
+    <label>Asset <input name="asset" required placeholder="SOL/USDT, NVDA, etc."></label>
+    <label>Direction
+      <select name="direction"><option value="long">Long</option><option value="short">Short</option></select>
+    </label>
+    <label>Entry price <input name="entry_price" type="number" step="any"></label>
+    <label>Exit price <input name="exit_price" type="number" step="any"></label>
+    <label>Size <input name="size" type="number" step="any"></label>
+    <label>Result
+      <select name="result"><option value="open">Open</option><option value="win">Win</option><option value="loss">Loss</option></select>
+    </label>
+    <label>Strategy <input name="strategy" placeholder="breakout scalp, OCO, etc."></label>
+    <label>Notes <textarea name="notes" rows="3"></textarea></label>
+    <div class="modal-actions">
+      <button type="button" class="btn ghost" data-close>Cancel</button>
+      <button type="submit" class="btn">Save</button>
+    </div>
+  </form>
+</div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>
