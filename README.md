@@ -3,7 +3,7 @@
 A single dashboard covering stock positions, options tracking, crypto positions, and a trade journal.
 Runs entirely on your machine. Live prices come from **yfinance** (stocks + options, no key) and
 **CoinGecko** (crypto, no key). Your positions and journal entries are stored in a local SQLite file
-(`trade_hub.db`) that's created automatically the first time you run it — nothing you enter gets sent anywhere.
+(`trade_hub.db`) that's created automatically the first time you run it
 
 ## Setup
 
